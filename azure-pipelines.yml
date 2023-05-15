@@ -1,0 +1,89 @@
+trigger:
+- master
+
+pool:
+  vmImage: ubuntu-latest
+
+stages:
+- stage: Build
+  jobs:
+  - job: Build_Package
+    displayName: "Build a python package"
+    steps:
+    - task: UsePythonVersion@0
+      inputs:
+        versionSpec: '3.8'
+      displayName: "Use Python 3.8"
+    - script: |
+        python -m pip install --upgrade pip
+        pip install wheel
+        pip install -r requirements.txt
+      displayName: "Install dependencies"
+    - script: |
+        python setup.py bdist_wheel
+      displayName: "Build package"
+    - task: PublishPipelineArtifact@0
+      inputs:
+        artifactName: 'python_package_artifact'
+        targetPath: '$(System.DefaultWorkingDirectory)/dist'
+      displayName: "Publish artifact"
+
+- stage: Deploy-Dev
+  jobs:
+  - deployment: Deploy_Dev
+    displayName: "Deploy to Development Environment"
+    environment: 'Development'
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - task: DownloadPipelineArtifact@2
+            inputs:
+              artifact: 'python_package_artifact'
+            displayName: "Download artifact"
+          - task: UsePythonVersion@0
+            inputs:
+              versionSpec: '3.x'
+            displayName: "Use Python 3.x"
+          - script: |
+              pip install -Iv ./python_package_artifact/dist/*.whl
+            displayName: "Install package"
+          - task: SSH@0
+            inputs:
+              sshEndpoint: '20.231.38.228'
+              runOptions: 'commands'
+              commands: |
+                ssh -q -o StrictHostKeyChecking=no
+                systemctl restart myapp
+              readyTimeout: '20000'
+            displayName: "Restart service on DevVM"
+
+- stage: Deploy-Prod
+  jobs:
+  - deployment: Deploy_Prod
+    displayName: "Deploy to Production Environment"
+    environment: 'Production'
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - task: DownloadPipelineArtifact@2
+            inputs:
+              artifact: 'python_package_artifact'
+            displayName: "Download artifact"
+          - task: UsePythonVersion@0
+            inputs:
+              versionSpec: '3.x'
+            displayName: "Use Python 3.x"
+          - script: |
+              pip install -Iv ./python_package_artifact/dist/*.whl
+            displayName: "Install package"
+          - task: SSH@0
+            inputs:
+              sshEndpoint: '172.174.20.252'
+              runOptions: 'commands'
+              commands: |
+                ssh -q -o StrictHostKeyChecking=no
+                systemctl restart myapp
+              readyTimeout: '20000'
+            displayName: "Restart service on ProdVM"
