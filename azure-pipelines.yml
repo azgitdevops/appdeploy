@@ -28,9 +28,9 @@ stages:
         targetPath: '$(System.DefaultWorkingDirectory)/dist'
       displayName: "Publish artifact"
 
-- stage: Deploy-Dev
+- stage: DeployDev
   jobs:
-  - deployment: Deploy-Dev
+  - deployment: DeployDev
     displayName: "Deploy to Development Environment"
     environment: 'Development'
     strategy:
@@ -58,9 +58,9 @@ stages:
               readyTimeout: '20000'
             displayName: "Restart service on DevVM"
 
-- stage: Deploy-Prod
+- stage: DeployProd
   jobs:
-  - deployment: Deploy-Prod
+  - deployment: DeployProd
     displayName: "Deploy to Production Environment"
     environment: 'Production'
     strategy:
