@@ -30,7 +30,7 @@ stages:
 
 - stage: Deploy-Dev
   jobs:
-  - deployment: Deploy_Dev
+  - deployment: Deploy-Dev
     displayName: "Deploy to Development Environment"
     environment: 'Development'
     strategy:
@@ -60,7 +60,7 @@ stages:
 
 - stage: Deploy-Prod
   jobs:
-  - deployment: Deploy_Prod
+  - deployment: Deploy-Prod
     displayName: "Deploy to Production Environment"
     environment: 'Production'
     strategy:
